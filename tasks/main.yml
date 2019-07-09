@@ -28,6 +28,7 @@
     lv: "{{ vname }}"
     size: "{{ lvsize }}"
   when: create and config_lvm
+  ignore_errors: yes
 
 - name: creating new filesystem on new LVM logical volume
   filesystem:
