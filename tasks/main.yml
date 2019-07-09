@@ -1,11 +1,12 @@
+---
 
 - name: lvm2 package name in Debian OS
-  set_facts:
+  set_fact:
     lvm2_pkg_name: lvm2
   when: ansible_os_family == "Debian"
 
 - name: lvm2 package name in RedHat OS
-  set_facts:
+  set_fact:
     lvm2_pkg_name: system-storage-manager
   when: ansible_os_family == "RedHat"
 
@@ -18,14 +19,14 @@
 - name: creating new LVM volume group
   lvg:
     vg: "{{ vgname }}"
-    pvs: "{{ new_disk }}"
+    pvs: "{{ current_disk }}"
     state: present
   when: create and config_lvm
 
 - name: creating new LVM logical volume
   lvol:
     vg: "{{ vgname }}"
-    lv: "{{ vname }}"
+    lv: "{{ lvname }}"
     size: "{{ lvsize }}"
   when: create and config_lvm
   ignore_errors: yes
@@ -55,5 +56,5 @@
   when: extend and config_lvm
 
 - name: resizing filesystem
-  command: resize2fs /dev/{{ vgname }}/{{ lvname }}
+  command: xfs_growfs /dev/{{ vgname }}/{{ lvname }}
   when: resize and config_lvm
