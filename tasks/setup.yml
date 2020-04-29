@@ -1,0 +1,17 @@
+---
+
+- name: lvm2 package name in Debian OS
+  set_fact:
+    lvm2_pkg_name: lvm2
+  when: ansible_os_family == "Debian"
+
+- name: lvm2 package name in RedHat OS
+  set_fact:
+    lvm2_pkg_name: system-storage-manager
+  when: ansible_os_family == "RedHat"
+
+- name: installing lvm2
+  package:
+    name: "{{ lvm2_pkg_name }}"
+    state: present
+  when: setup

@@ -1,60 +1,10 @@
 ---
 
-- name: lvm2 package name in Debian OS
-  set_fact:
-    lvm2_pkg_name: lvm2
-  when: ansible_os_family == "Debian"
+- include_tasks: setup.yml
 
-- name: lvm2 package name in RedHat OS
-  set_fact:
-    lvm2_pkg_name: system-storage-manager
-  when: ansible_os_family == "RedHat"
+- name: Create the logical volumes
+  include_tasks: create.yml
+  loop: "{{ lvm_create }}"   
 
-- name: installing lvm2
-  package:
-    name: "{{ lvm2_pkg_name }}"
-    state: present
-  when: config_lvm
 
-- name: creating new LVM volume group
-  lvg:
-    vg: "{{ vgname }}"
-    pvs: "{{ current_disk }}"
-    state: present
-  when: create and config_lvm
 
-- name: creating new LVM logical volume
-  lvol:
-    vg: "{{ vgname }}"
-    lv: "{{ lvname }}"
-    size: "{{ lvsize }}"
-  when: create and config_lvm
-  ignore_errors: yes
-
-- name: creating new filesystem on new LVM logical volume
-  filesystem:
-    fstype: "{{ filesystem }}"
-    dev: "/dev/{{ vgname }}/{{ lvname }}"
-  when: create and config_lvm
-
-- name: mounting new filesystem
-  mount:
-    name: "{{ new_mntp }}"
-    src: "/dev/{{ vgname }}/{{ lvname }}"
-    fstype: "{{ filesystem }}"
-    state: "mounted"
-  when: create and config_lvm
-
-- name: extending existing LVM volume group
-  lvg:
-    vg: "{{ vgname }}"
-    pvs: "{{ extend_disks }}"
-  when: extend and config_lvm
-
-- name: extending existing filesystem
-  command: lvextend {{ lvextend_options }} /dev/{{ vgname }}/{{ lvname }}
-  when: extend and config_lvm
-
-- name: resizing filesystem
-  command: xfs_growfs /dev/{{ vgname }}/{{ lvname }}
-  when: resize and config_lvm

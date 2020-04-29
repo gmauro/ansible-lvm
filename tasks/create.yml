@@ -1,0 +1,41 @@
+---
+
+- name: Collect stats from the block device
+  stat:
+    path: "{{ item.pvs }}"
+  register: st
+
+- name: Check if the block device exists
+  fail: 
+    msg: "Whoops! The block device doesn't exist"
+  when: st.stat.isblk is not defined or st.stat.isblk == False
+
+- name: creating new LVM volume group
+  lvg:
+    vg: "{{ item.vgname }}"
+    pvs: "{{ item.pvs }}"
+    state: present
+  when: setup and create
+
+- name: creating new LVM logical volume
+  lvol:
+    vg: "{{ item.vgname }}"
+    lv: "{{ item.lvname }}"
+    size: "{{ item.lvsize }}"
+  when: setup and create
+  ignore_errors: yes
+
+- name: creating new filesystem on new LVM logical volume
+  filesystem:
+    fstype: "{{ item.fstype }}"
+    dev: "/dev/{{ item.vgname }}/{{ item.lvname }}"
+  when: setup and create
+
+- name: mounting new filesystem
+  mount:
+    name: "{{ item.mntp }}"
+    src: "/dev/{{ item.vgname }}/{{ item.lvname }}"
+    fstype: "{{ item.fstype }}"
+    state: "mounted"
+  when: setup and create
+     
